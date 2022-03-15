@@ -1,4 +1,5 @@
 const context = document.querySelector("canvas").getContext("2d");
+const res = document.querySelector("#res");
 
 context.canvas.height = 400;
 context.canvas.width = 1220;
@@ -89,6 +90,10 @@ const ground = function () {
 	});
 }
 
+const reset = function () { }
+
+let hitCount = 0;
+
 const loop = function () {
 	if (controller.up && square.jumping == false) {
 		square.yVelocity -= 20;
@@ -110,11 +115,25 @@ const loop = function () {
 	// if square is falling below floor line for each ground segment, write for loop
 	this.groundArray.forEach(e => {
 		if (square.x > (e.xInit - 30) && square.x < (e.xEnd - 30)) {
-			if (square.y > (e.yInit - e.lineWidth / 2) - 32) {
+			if (square.y > (e.yInit - e.lineWidth / 2) - square.height) {
 				square.jumping = false;
-				square.y = (e.yInit - e.lineWidth / 2) - 32;
+				square.y = (e.yInit - e.lineWidth / 2) - square.height;
 				square.yVelocity = 0;
 			}
+		}
+	});
+
+	// obstacle hit
+	obXCoors.forEach(obXCoor => {
+		var groundObj = {};
+		this.groundArray.forEach(e => {
+			if (obXCoor > (e.xInit) && obXCoor < (e.xEnd))
+				groundObj = e;
+		});
+
+		let obYCoor = groundObj.yInit - groundObj.lineWidth / 2;
+		if ((square.x > (obXCoor - 32) && square.x < (obXCoor + 20 - 32))) {// && (square.y < obYCoor && square.y > (obYCoor - 32))) {
+			hitCount++;
 		}
 	});
 
@@ -123,6 +142,7 @@ const loop = function () {
 		square.x = 1220;
 	} else if (square.x > 1220) {// if square goes past right boundary
 		square.x = -20;
+		res.textContent = hitCount;
 		nextFrame();
 	}
 
@@ -146,22 +166,20 @@ const loop = function () {
 	context.fillStyle = "#FBF5F3"; // hex for triangle color
 	obXCoors.forEach((obXCoor) => {
 		context.beginPath();
-		// var groundObj = this.groundArray.filter(e => { obXCoor > (e.xInit - 30) && obXCoor < (e.xEnd - 30) });
 		var groundObj = {};
 		this.groundArray.forEach(e => {
-			if (obXCoor > (e.xInit - 30) && obXCoor < (e.xEnd - 30))
+			if (obXCoor > (e.xInit) && obXCoor < (e.xEnd))
 				groundObj = e;
 		});
-		console.log(groundObj.xInit);
 
 		let obYCoor = groundObj.yInit - groundObj.lineWidth / 2;
 		context.moveTo(obXCoor, obYCoor); // x = random, y = coor. on "ground"
 		context.lineTo(obXCoor + 20, obYCoor); // x = ^random + 20, y = coor. on "ground"
-		context.lineTo(obXCoor + 10, obYCoor - 32); // x = ^random + 10, y = peak of triangle
+		context.lineTo(obXCoor + 10, obYCoor - square.height); // x = ^random + 10, y = peak of triangle
 
 		context.closePath();
 		context.fill();
-	})
+	});
 
 	// call update when the browser is ready to draw again
 	window.requestAnimationFrame(loop);
