@@ -51,13 +51,42 @@ const controller = {
 	}
 };
 
+var groundArray = [
+	{
+		strokeStyle: '#2E2532',
+		lineWidth: 30,
+		xInit: 0,
+		yInit: 385,
+		xEnd: 300,
+		yEnd: 385
+	},
+	{
+		strokeStyle: '#2E2532',
+		lineWidth: 60,
+		xInit: 300,
+		yInit: 385,
+		xEnd: 700,
+		yEnd: 385
+	},
+	{
+		strokeStyle: '#2E2532',
+		lineWidth: 90,
+		xInit: 700,
+		yInit: 385,
+		xEnd: 1220,
+		yEnd: 385
+	},
+];
+
 const ground = function () {
-	context.strokeStyle = "#2E2532";
-	context.lineWidth = 30;
-	context.beginPath();
-	context.moveTo(0, 385);
-	context.lineTo(1220, 385);
-	context.stroke();
+	this.groundArray.forEach(e => {
+		context.strokeStyle = e.strokeStyle;
+		context.lineWidth = e.lineWidth;
+		context.beginPath();
+		context.moveTo(e.xInit, e.yInit);
+		context.lineTo(e.xEnd, e.yEnd);
+		context.stroke();
+	});
 }
 
 const loop = function () {
@@ -76,13 +105,18 @@ const loop = function () {
 	square.y += square.yVelocity;
 	square.xVelocity *= 0.9;// friction
 	square.yVelocity *= 0.9;// friction
+	// console.log(square.x, ':', square.y);
 
-	// if square is falling below floor line
-	if (square.y > 386 - 16 - 32) {
-		square.jumping = false;
-		square.y = 386 - 16 - 32;
-		square.yVelocity = 0;
-	}
+	// if square is falling below floor line for each ground segment, write for loop
+	this.groundArray.forEach(e => {
+		if (square.x > (e.xInit - 30) && square.x < (e.xEnd - 30)) {
+			if (square.y > (e.yInit - e.lineWidth / 2) - 32) {
+				square.jumping = false;
+				square.y = (e.yInit - e.lineWidth / 2) - 32;
+				square.yVelocity = 0;
+			}
+		}
+	});
 
 	// if square is going off the left of the screen
 	if (square.x < -20) {
@@ -102,6 +136,9 @@ const loop = function () {
 	context.rect(square.x, square.y, square.width, square.height);
 	context.fill();
 
+	// Creates the "ground" for each frame
+	ground();
+
 	// Create the obstacles for each frame
 	// Set the standard obstacle height
 	const height = 200 * Math.cos(Math.PI / 6);
@@ -109,15 +146,23 @@ const loop = function () {
 	context.fillStyle = "#FBF5F3"; // hex for triangle color
 	obXCoors.forEach((obXCoor) => {
 		context.beginPath();
-		context.moveTo(obXCoor, 385); // x = random, y = coor. on "ground"
-		context.lineTo(obXCoor + 20, 385); // x = ^random + 20, y = coor. on "ground"
-		context.lineTo(obXCoor + 10, 510 - height); // x = ^random + 10, y = peak of triangle
+		// var groundObj = this.groundArray.filter(e => { obXCoor > (e.xInit - 30) && obXCoor < (e.xEnd - 30) });
+		var groundObj = {};
+		this.groundArray.forEach(e => {
+			if (obXCoor > (e.xInit - 30) && obXCoor < (e.xEnd - 30))
+				groundObj = e;
+		});
+		console.log(groundObj.xInit);
+
+		let obYCoor = groundObj.yInit - groundObj.lineWidth / 2;
+		context.moveTo(obXCoor, obYCoor); // x = random, y = coor. on "ground"
+		context.lineTo(obXCoor + 20, obYCoor); // x = ^random + 20, y = coor. on "ground"
+		context.lineTo(obXCoor + 10, obYCoor - 32); // x = ^random + 10, y = peak of triangle
+
 		context.closePath();
 		context.fill();
 	})
 
-	// Creates the "ground" for each frame
-	ground();
 	// call update when the browser is ready to draw again
 	window.requestAnimationFrame(loop);
 };
