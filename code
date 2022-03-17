@@ -1,0 +1,7 @@
+EXTRA CODEs
+		context.beginPath();	//hair style
+		context.lineWidth = 3;
+		context.moveTo(square.x + 2, square.y - 6);
+		context.lineTo(square.x + 6, square.y);
+		context.lineTo(square.x + 10, square.y - 6);
+		context.stroke();

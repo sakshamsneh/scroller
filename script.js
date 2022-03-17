@@ -3,15 +3,8 @@ const res = document.querySelector("#res");
 
 context.canvas.height = 400;
 context.canvas.width = 1220;
-// context.canvas.width = 2420;
 
-let overallx = 1220;
-// Start the frame count at 1
-let frameCount = 1;
-// Set the number of obstacles to match the current "level"
-let obCount = frameCount;
-// Create a collection to hold the generated x coordinates
-const obXCoors = [];
+
 let cloudCoors = [
 	{
 		id: 1,
@@ -136,44 +129,10 @@ var groundArray = [
 		type: 0
 	}];
 
+let overallx = 1220;
 let leftLen = context.canvas.width;
 // Create the obstacles for each frame
 const nextLevel = (a) => {
-	// increase the frame / "level" count
-	frameCount++;
-	for (let i = 0; i < obCount; i++) {
-		// Randomly generate the x coordinate for the top corner start of the triangles
-		obXCoor = Math.floor(Math.random() * (1165 - 140 + 1) + 140);
-		// obXCoors.push(obXCoor);
-	}
-
-	// var groundCount = Math.floor(Math.random() * (10));
-	/*var prevXCoor = 0;
-	groundArray = [{
-		strokeStyle: '#594243',
-		lineWidth: 30,
-		xInit: 0,
-		yInit: 385,
-		xEnd: 1220,
-		yEnd: 385
-	}];
-	for (let i = 0; i < 5; i++) {
-		var XCoor = Math.floor(Math.random() * (context.canvas.width - prevXCoor)) + prevXCoor;
-		var lWidth = Math.floor(Math.random() * (5));
-		len = Math.floor(Math.random() * ((leftLen / (5 - i)) - 200)) + 200;
-		leftLen -= len;
-		groundArray.push({
-			strokeStyle: '#594243',
-			lineWidth: lWidth * 30,
-			xInit: XCoor,
-			yInit: 385,
-			xEnd: XCoor + len,
-			yEnd: 385
-		});
-		prevXCoor = XCoor + len;
-		if (leftLen < 100) break;
-	}
-	groundArray.sort((a, b) => a.xInit >= b.xInit ? 1 : -1); */
 	let x = a == 0 ? 8 : -8;
 	if ((overallx == 1220 && a == 0) || (overallx == 2420 && a == 1)) return -1;
 	overallx -= x;
@@ -188,6 +147,7 @@ const controller = {
 	left: false,
 	right: false,
 	up: false,
+	space: false,
 	keyListener: function (event) {
 		var key_state = (event.type == "keydown") ? true : false;
 		switch (event.keyCode) {
@@ -200,6 +160,8 @@ const controller = {
 			case 39:// right key
 				controller.right = key_state;
 				break;
+			case 32://space key
+				controller.space = key_state;
 		}
 	}
 };
@@ -213,54 +175,49 @@ const ground = function () {
 	context.stroke();
 
 	this.groundArray.forEach(e => {
-		if (e.type == 1)
-			context.globalAlpha = 0.5;
-		else
-			context.globalAlpha = 1;
+		context.globalAlpha = e.type == 1 ? 0.5 : 1;
+		// context.shadowBlur = e.type == 1 ? 0 : 20;
+		context.shadowBlur = 10;
+		context.shadowColor = e.type == 1 ? "#0000ff" : "#00ff00";
 		context.strokeStyle = e.strokeStyle;
 		context.lineWidth = e.lineWidth;
 		context.beginPath();
 		context.moveTo(e.xInit, e.yInit);
 		context.lineTo(e.xEnd, e.yEnd);
 		context.stroke();
+		context.shadowBlur = 0;
 	});
 }
 
 const createCloud = function (x, y, fill) {
 	context.beginPath();
 	context.moveTo(x, y);
-	// context.bezierCurveTo(130, 100, 130, 150, 230, 150);
-	// context.bezierCurveTo(250, 180, 320, 180, 340, 150);
-	// context.bezierCurveTo(420, 150, 420, 120, 390, 100);
-	// context.bezierCurveTo(430, 40, 370, 30, 340, 50);
-	// context.bezierCurveTo(320, 5, 250, 20, 250, 50);
-	// context.bezierCurveTo(200, 5, 150, 20, 170, 80);
+	context.shadowBlur = 20;
+	context.shadowColor = fill;
 	context.quadraticCurveTo(x, y + 50, x + 50, y + 25);
-	context.quadraticCurveTo(x + 50, y + 50, x + 125, y - 5);
-	context.quadraticCurveTo(x + 75, y - 50, x + 75, y - 25);
+	context.quadraticCurveTo(x + 75, y + 75, x + 100, y);
+	context.quadraticCurveTo(x + 55, y - 50, x + 25, y - 5);
 	context.quadraticCurveTo(x, y - 25, x, y + 5);
 	context.closePath();
 	context.lineWidth = 5;
 	context.fillStyle = fill;
 	context.fill();
+	context.shadowBlur = 0;
 }
 
 const cloud = function () {
 	cloudCoors.forEach(e => {
 		e.x += e.speed;
-		if (e.x > context.canvas.width)
-			e.x = 0;
-		/* cloudimg = new Image();
-		cloudimg.src = 'http://silveiraneto.net/wp-content/uploads/2011/06/cloud.png';
-		context.drawImage(cloudimg, e.x, 0); */
+		if (e.x > context.canvas.width) e.x = 0;
 		createCloud(e.x, e.y, e.fill);
 	});
 }
+
 const reset = function () { }
 
 let hitCount = 0;
 
-const player = function (dir) {
+const player = function (dir, sword) {
 	// Creates and fills the cube for each frame
 	if (dir == 1) {
 		context.fillStyle = "#dfb791"; // body
@@ -270,7 +227,7 @@ const player = function (dir) {
 
 		context.strokeStyle = '#000000';	//hair
 		context.lineWidth = 3;
-		context.strokeRect(square.x, square.y, square.width, 1);
+		context.strokeRect(square.x, square.y, square.width, 1);	//init x, init y, len of line, box width(keep 1)
 		context.lineWidth = 8;
 		context.strokeRect(square.x + 2, square.y + 4, 8, 1);
 
@@ -285,6 +242,24 @@ const player = function (dir) {
 		/* context.strokeStyle = '#ff0000';	//cap
 		context.lineWidth = 4;
 		context.strokeRect(square.x, square.y-2, square.width - 12, 1); */
+
+		context.strokeStyle = '#dfb791';	//hand
+		context.lineWidth = 4;
+		context.strokeRect(square.x + 10, square.y + square.width - 10, 8, 1);
+
+		if (sword == 0) {	//no space
+			context.strokeStyle = '#939595';	//sword
+			context.lineWidth = 4;
+			context.strokeRect(square.x + 18, square.y + square.width - 10, 16, 1);
+			context.shadowBlur = 0;
+		} else {
+			context.beginPath();
+			context.strokeStyle = '#939595';	//sword
+			context.lineWidth = 4;
+			context.moveTo(square.x + 18, square.y + square.width - 10);
+			context.lineTo(square.x + 18 + 16, square.y + square.width - 20);
+			context.stroke();
+		}
 	} else {
 		context.fillStyle = "#dfb791"; // body
 		context.beginPath();
@@ -308,15 +283,33 @@ const player = function (dir) {
 		/* context.strokeStyle = '#ff0000';	//cap
 		context.lineWidth = 4;
 		context.strokeRect(square.x, square.y-2, square.width - 12, 1); */
+
+		context.strokeStyle = '#dfb791';	//hand
+		context.lineWidth = 4;
+		context.strokeRect(square.x + square.width - 18, square.y + square.width - 10, 8, 1);
+
+		if (sword == 0) {	//no space
+			context.strokeStyle = '#939595';	//sword
+			context.lineWidth = 4;
+			context.strokeRect(square.x - 2, square.y + square.width - 10, 16, 1);
+		} else {
+			context.beginPath();
+			context.strokeStyle = '#939595';	//sword
+			context.lineWidth = 4;
+			context.moveTo(square.x - 2, square.y + square.width - 20);
+			context.lineTo(square.x - 2 + 16, square.y + square.width - 10);
+			context.stroke();
+		}
 	}
 }
 
 var dir = 1;
 
 const loop = function () {
-	// if square is falling below floor line for each ground segment, write for loop
 	let yVelocity = 0;
-	// var dir = 1;
+	let sword = controller.space ? 1 : 0;
+
+	// if square is falling below floor line for each ground segment, write for loop
 	this.groundArray.forEach(e => {
 		if (square.x > (e.xInit - 30) && square.x < (e.xEnd)) {	//add logic for basic ground
 			yVelocity = e.yVelocity;
@@ -349,29 +342,6 @@ const loop = function () {
 	square.xVelocity *= 0.9;// friction
 	square.yVelocity *= 0.9;// friction
 
-	// obstacle hit
-	obXCoors.forEach(obXCoor => {
-		var groundObj = {};
-		this.groundArray.forEach(e => {
-			if (obXCoor > (e.xInit) && obXCoor < (e.xEnd))
-				groundObj = e;
-		});
-
-		let obYCoor = groundObj.yInit - groundObj.lineWidth / 2;
-		if ((square.x > (obXCoor - 32) && square.x < (obXCoor + 20 - 32))) {// && (square.y < obYCoor && square.y > (obYCoor - 32))) {
-			hitCount++;
-		}
-	});
-
-	// if square is going off the left of the screen
-	/* if (square.x < -20) {
-		square.x = 1220;
-		// } else if (square.x > 1220) {// if square goes past right boundary
-	} else if (square.x > context.canvas.width / 2) {// if square goes past right boundary
-		square.x = -20;
-		// res.textContent = hitCount;
-		nextLevel();
-	} */
 	if (square.x < -20)
 		square.x = -20;
 	else if (square.x > context.canvas.width)
@@ -390,35 +360,13 @@ const loop = function () {
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
 	// Creates the "player" for each frame
-	player(dir);
+	player(dir, sword);
 
 	// Creates the "cloud" for each frame
 	cloud();
 
 	// Creates the "ground" for each frame
 	ground();
-
-	// Create the obstacles for each frame
-	// Set the standard obstacle height
-	const height = 200 * Math.cos(Math.PI / 6);
-
-	context.fillStyle = "#FBF5F3"; // hex for triangle color
-	obXCoors.forEach((obXCoor) => {
-		context.beginPath();
-		var groundObj = {};
-		this.groundArray.forEach(e => {
-			if (obXCoor > (e.xInit) && obXCoor < (e.xEnd))
-				groundObj = e;
-		});
-
-		let obYCoor = groundObj.yInit - groundObj.lineWidth / 2;
-		context.moveTo(obXCoor, obYCoor); // x = random, y = coor. on "ground"
-		context.lineTo(obXCoor + 20, obYCoor); // x = ^random + 20, y = coor. on "ground"
-		context.lineTo(obXCoor + 10, obYCoor - square.height); // x = ^random + 10, y = peak of triangle
-
-		context.closePath();
-		context.fill();
-	});
 
 	// call update when the browser is ready to draw again
 	window.requestAnimationFrame(loop);
