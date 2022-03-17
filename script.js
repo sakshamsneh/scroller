@@ -44,41 +44,74 @@ const square = {
 	yVelocity: 0
 };
 
-/* var groundArray = [
+var groundArray = [
 	{
-		strokeStyle: '#2E2532',
+		strokeStyle: '#594243',
 		lineWidth: 30,
 		xInit: 0,
 		yInit: 385,
 		xEnd: 300,
-		yEnd: 385
+		yEnd: 385,
+		xVelocity: 0.5,
+		yVelocity: 20,
+		type: 0,		//0: ground, 1: water, 2:?
 	},
 	{
-		strokeStyle: '#2E2532',
+		strokeStyle: '#594243',
 		lineWidth: 60,
 		xInit: 300,
 		yInit: 385,
 		xEnd: 700,
-		yEnd: 385
+		yEnd: 385,
+		xVelocity: 0.5,
+		yVelocity: 20,
+		type: 0,
 	},
 	{
-		strokeStyle: '#2E2532',
+		strokeStyle: '#594243',
 		lineWidth: 90,
 		xInit: 700,
 		yInit: 385,
-		xEnd: 1220,
-		yEnd: 385
+		xEnd: 780,
+		yEnd: 385,
+		xVelocity: 0.5,
+		yVelocity: 20,
+		type: 0,
 	},
-]; */
-
-var groundArray = [{
-	strokeStyle: '#2E2532',
-	lineWidth: 30,
-	xInit: 0,
-	yInit: 385,
-	xEnd: 1220,
-	yEnd: 385
-}];
+	{
+		strokeStyle: '#594243',
+		lineWidth: 30,
+		xInit: 780,
+		yInit: 385,
+		xEnd: 820,
+		yEnd: 385,
+		xVelocity: 0.5,
+		yVelocity: 20,
+		type: 0,
+	},
+	{
+		strokeStyle: '#0000ff',
+		lineWidth: 20,
+		xInit: 820,
+		yInit: 390,
+		xEnd: 1020,
+		yEnd: 390,
+		xVelocity: 0.2,
+		yVelocity: 15,
+		type: 1,
+	},
+	{
+		strokeStyle: '#594243',
+		lineWidth: 30,
+		xInit: 1020,
+		yInit: 385,
+		xEnd: 1220,
+		yEnd: 385,
+		xVelocity: 0.5,
+		yVelocity: 20,
+		type: 0,
+	},
+];
 
 let leftLen = context.canvas.width;
 // Create the obstacles for each frame
@@ -92,9 +125,9 @@ const nextLevel = () => {
 	}
 
 	// var groundCount = Math.floor(Math.random() * (10));
-	var prevXCoor = 0;
+	/*var prevXCoor = 0;
 	groundArray = [{
-		strokeStyle: '#2E2532',
+		strokeStyle: '#594243',
 		lineWidth: 30,
 		xInit: 0,
 		yInit: 385,
@@ -107,7 +140,7 @@ const nextLevel = () => {
 		len = Math.floor(Math.random() * ((leftLen / (5 - i)) - 200)) + 200;
 		leftLen -= len;
 		groundArray.push({
-			strokeStyle: '#2E2532',
+			strokeStyle: '#594243',
 			lineWidth: lWidth * 30,
 			xInit: XCoor,
 			yInit: 385,
@@ -117,7 +150,7 @@ const nextLevel = () => {
 		prevXCoor = XCoor + len;
 		if (leftLen < 100) break;
 	}
-	groundArray.sort((a, b) => a.xInit >= b.xInit ? 1 : -1);
+	groundArray.sort((a, b) => a.xInit >= b.xInit ? 1 : -1); */
 }
 
 const controller = {
@@ -141,7 +174,18 @@ const controller = {
 };
 
 const ground = function () {
+	context.strokeStyle = '#000000';
+	context.lineWidth = 1;
+	context.beginPath();
+	context.moveTo(0, 400);
+	context.lineTo(1220, 400);
+	context.stroke();
+
 	this.groundArray.forEach(e => {
+		if (e.type == 1)
+			context.globalAlpha = 0.5;
+		else
+			context.globalAlpha = 1;
 		context.strokeStyle = e.strokeStyle;
 		context.lineWidth = e.lineWidth;
 		context.beginPath();
@@ -186,33 +230,37 @@ const reset = function () { }
 let hitCount = 0;
 
 const loop = function () {
+	// if square is falling below floor line for each ground segment, write for loop
+	let yVelocity = 0;
+	this.groundArray.forEach(e => {
+		if (square.x > (e.xInit - 30) && square.x < (e.xEnd)) {	//add logic for basic ground
+			yVelocity = e.yVelocity;
+			if (controller.left) {
+				square.xVelocity -= e.xVelocity;
+			}
+			if (controller.right) {
+				square.xVelocity += e.xVelocity;
+			}
+			var sqHeight = e.type == 0 ? square.height : e.type == 1 ? square.height / 2 : square.height;
+			if (square.y > (e.yInit - e.lineWidth / 2) - sqHeight) {
+				square.jumping = false;
+				square.y = (e.yInit - e.lineWidth / 2) - sqHeight;
+				square.yVelocity = 0;
+			}
+		}
+	});
+
 	if (controller.up && square.jumping == false) {
-		square.yVelocity -= 20;
+		square.yVelocity -= yVelocity;
+		upFlag = true;
 		square.jumping = true;
 	}
-	if (controller.left) {
-		square.xVelocity -= 0.5;
-	}
-	if (controller.right) {
-		square.xVelocity += 0.5;
-	}
+
 	square.yVelocity += 1.5;// gravity
 	square.x += square.xVelocity;
 	square.y += square.yVelocity;
 	square.xVelocity *= 0.9;// friction
 	square.yVelocity *= 0.9;// friction
-	// console.log(square.x, ':', square.y);
-
-	// if square is falling below floor line for each ground segment, write for loop
-	this.groundArray.forEach(e => {
-		if (square.x > (e.xInit - 30) && square.x < (e.xEnd)) {	//add logic for basic ground
-			if (square.y > (e.yInit - e.lineWidth / 2) - square.height) {
-				square.jumping = false;
-				square.y = (e.yInit - e.lineWidth / 2) - square.height;
-				square.yVelocity = 0;
-			}
-		}
-	});
 
 	// obstacle hit
 	obXCoors.forEach(obXCoor => {
@@ -242,7 +290,7 @@ const loop = function () {
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
 	// Creates and fills the cube for each frame
-	context.fillStyle = "#8DAA9D"; // hex for cube color
+	context.fillStyle = "#4f5f58"; // hex for cube color
 	context.beginPath();
 	context.rect(square.x, square.y, square.width, square.height);
 	context.fill();
