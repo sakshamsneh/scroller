@@ -3,7 +3,9 @@ const res = document.querySelector("#res");
 
 context.canvas.height = 400;
 context.canvas.width = 1220;
+// context.canvas.width = 2420;
 
+let overallx = 1220;
 // Start the frame count at 1
 let frameCount = 1;
 // Set the number of obstacles to match the current "level"
@@ -111,17 +113,38 @@ var groundArray = [
 		yVelocity: 20,
 		type: 0,
 	},
-];
+	{
+		strokeStyle: "#0000ff",
+		lineWidth: 20,
+		xInit: 1220,
+		yInit: 390,
+		xEnd: 1520,
+		yEnd: 390,
+		xVelocity: 0.2,
+		yVelocity: 15,
+		type: 1
+	},
+	{
+		strokeStyle: "#594243",
+		lineWidth: 30,
+		xInit: 1520,
+		yInit: 390,
+		xEnd: 2420,
+		yEnd: 390,
+		xVelocity: 0.5,
+		yVelocity: 20,
+		type: 0
+	}];
 
 let leftLen = context.canvas.width;
 // Create the obstacles for each frame
-const nextLevel = () => {
+const nextLevel = (a) => {
 	// increase the frame / "level" count
 	frameCount++;
 	for (let i = 0; i < obCount; i++) {
 		// Randomly generate the x coordinate for the top corner start of the triangles
 		obXCoor = Math.floor(Math.random() * (1165 - 140 + 1) + 140);
-		obXCoors.push(obXCoor);
+		// obXCoors.push(obXCoor);
 	}
 
 	// var groundCount = Math.floor(Math.random() * (10));
@@ -151,6 +174,14 @@ const nextLevel = () => {
 		if (leftLen < 100) break;
 	}
 	groundArray.sort((a, b) => a.xInit >= b.xInit ? 1 : -1); */
+	let x = a == 0 ? 8 : -8;
+	if ((overallx == 1220 && a == 0) || (overallx == 2420 && a == 1)) return -1;
+	overallx -= x;
+	groundArray.forEach(el => {
+		el.xInit += x;
+		el.xEnd += x;
+	});
+	return 1;
 }
 
 const controller = {
@@ -277,12 +308,25 @@ const loop = function () {
 	});
 
 	// if square is going off the left of the screen
-	if (square.x < -20) {
+	/* if (square.x < -20) {
 		square.x = 1220;
-	} else if (square.x > 1220) {// if square goes past right boundary
+		// } else if (square.x > 1220) {// if square goes past right boundary
+	} else if (square.x > context.canvas.width / 2) {// if square goes past right boundary
 		square.x = -20;
-		res.textContent = hitCount;
+		// res.textContent = hitCount;
 		nextLevel();
+	} */
+	if (square.x < -20)
+		square.x = -20;
+	else if (square.x > context.canvas.width)
+		square.x = context.canvas.width - 20;
+
+	if (controller.right && square.x > context.canvas.width / 2) {
+		if (nextLevel(1) == 0)
+			square.x -= 18;
+	} else if (controller.left && square.x < context.canvas.width / 2) {
+		if (nextLevel(0) == 0)
+			square.x += 18;
 	}
 
 	// Creates the backdrop for each frame
