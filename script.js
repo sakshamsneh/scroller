@@ -148,6 +148,7 @@ const controller = {
 	right: false,
 	up: false,
 	space: false,
+	ctrl: false,
 	keyListener: function (event) {
 		var key_state = (event.type == "keydown") ? true : false;
 		switch (event.keyCode) {
@@ -162,6 +163,10 @@ const controller = {
 				break;
 			case 32://space key
 				controller.space = key_state;
+				break;
+			case 17://ctrl key
+				controller.ctrl = key_state;
+				break;
 		}
 	}
 };
@@ -217,7 +222,7 @@ const reset = function () { }
 
 let hitCount = 0;
 
-const player = function (dir, sword) {
+const player = function (dir, sword, shield) {
 	// Creates and fills the cube for each frame
 	if (dir == 1) {
 		context.fillStyle = "#dfb791"; // body
@@ -251,13 +256,21 @@ const player = function (dir, sword) {
 			context.strokeStyle = '#939595';	//sword
 			context.lineWidth = 4;
 			context.strokeRect(square.x + 18, square.y + square.width - 10, 16, 1);
-			context.shadowBlur = 0;
 		} else {
 			context.beginPath();
 			context.strokeStyle = '#939595';	//sword
 			context.lineWidth = 4;
 			context.moveTo(square.x + 18, square.y + square.width - 10);
 			context.lineTo(square.x + 18 + 16, square.y + square.width - 20);
+			context.stroke();
+		}
+
+		if (shield) {
+			context.beginPath();
+			context.strokeStyle = '#2d5555';	//sword
+			context.lineWidth = 4;
+			// context.arc(square.x + 16, square.y + 16, 40, 125, Math.PI / 4);	//4th part of circle
+			context.arc(square.x + 16, square.y + 16, 40, 0, 2 * Math.PI);
 			context.stroke();
 		}
 	} else {
@@ -300,14 +313,35 @@ const player = function (dir, sword) {
 			context.lineTo(square.x - 2 + 16, square.y + square.width - 10);
 			context.stroke();
 		}
+
+		if (shield) {
+			context.beginPath();
+			context.strokeStyle = '#2d5555';	//sword
+			context.lineWidth = 4;
+			context.arc(square.x + 16, square.y + 16, 40, 0, 2 * Math.PI);
+			context.stroke();
+		}
 	}
 }
 
 var dir = 1;
+var shieldTime = 100, shieldTimeout = 100;
+var shield = 0;
 
 const loop = function () {
 	let yVelocity = 0;
 	let sword = controller.space ? 1 : 0;
+	if (controller.ctrl) {
+		if (shieldTime > 0) shield = 1;		//if ctrl pressed, shieldTime>0, then keep shield open
+		else {
+			shieldTime = 100;				//if shieldTime==0, ctrl pressed, then open shield, restart shieldTime=100
+			shield = 1;
+		}
+	}
+	if (shieldTime > 0 && shield == 1) {	//if shieldTime>0 and shield is open, reduce shieldTime
+		shieldTime--;
+	}
+	if (shieldTime == 0) shield = 0;		//if shieldTime==0, close shield
 
 	// if square is falling below floor line for each ground segment, write for loop
 	this.groundArray.forEach(e => {
@@ -360,7 +394,7 @@ const loop = function () {
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
 	// Creates the "player" for each frame
-	player(dir, sword);
+	player(dir, sword, shield);
 
 	// Creates the "cloud" for each frame
 	cloud();
