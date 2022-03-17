@@ -10,6 +10,29 @@ let frameCount = 1;
 let obCount = frameCount;
 // Create a collection to hold the generated x coordinates
 const obXCoors = [];
+let cloudCoors = [
+	{
+		id: 1,
+		x: 170,
+		y: 80,
+		fill: '#ffffff',
+		speed: 0.3,
+	},
+	{
+		id: 2,
+		x: 150,
+		y: 160,
+		fill: '#e8e9e9',
+		speed: 0.5,
+	},
+	{
+		id: 3,
+		x: 0,
+		y: 210,
+		fill: '#ffffff',
+		speed: 1,
+	},
+];
 
 const square = {
 	height: 32,
@@ -21,38 +44,7 @@ const square = {
 	yVelocity: 0
 };
 
-// Create the obstacles for each frame
-const nextFrame = () => {
-	// increase the frame / "level" count
-	frameCount++;
-	for (let i = 0; i < obCount; i++) {
-		// Randomly generate the x coordinate for the top corner start of the triangles
-		obXCoor = Math.floor(Math.random() * (1165 - 140 + 1) + 140);
-		obXCoors.push(obXCoor);
-	}
-}
-
-const controller = {
-	left: false,
-	right: false,
-	up: false,
-	keyListener: function (event) {
-		var key_state = (event.type == "keydown") ? true : false;
-		switch (event.keyCode) {
-			case 37:// left key
-				controller.left = key_state;
-				break;
-			case 38:// up key
-				controller.up = key_state;
-				break;
-			case 39:// right key
-				controller.right = key_state;
-				break;
-		}
-	}
-};
-
-var groundArray = [
+/* var groundArray = [
 	{
 		strokeStyle: '#2E2532',
 		lineWidth: 30,
@@ -77,7 +69,76 @@ var groundArray = [
 		xEnd: 1220,
 		yEnd: 385
 	},
-];
+]; */
+
+var groundArray = [{
+	strokeStyle: '#2E2532',
+	lineWidth: 30,
+	xInit: 0,
+	yInit: 385,
+	xEnd: 1220,
+	yEnd: 385
+}];
+
+let leftLen = context.canvas.width;
+// Create the obstacles for each frame
+const nextLevel = () => {
+	// increase the frame / "level" count
+	frameCount++;
+	for (let i = 0; i < obCount; i++) {
+		// Randomly generate the x coordinate for the top corner start of the triangles
+		obXCoor = Math.floor(Math.random() * (1165 - 140 + 1) + 140);
+		obXCoors.push(obXCoor);
+	}
+
+	// var groundCount = Math.floor(Math.random() * (10));
+	var prevXCoor = 0;
+	groundArray = [{
+		strokeStyle: '#2E2532',
+		lineWidth: 30,
+		xInit: 0,
+		yInit: 385,
+		xEnd: 1220,
+		yEnd: 385
+	}];
+	for (let i = 0; i < 5; i++) {
+		var XCoor = Math.floor(Math.random() * (context.canvas.width - prevXCoor)) + prevXCoor;
+		var lWidth = Math.floor(Math.random() * (5));
+		len = Math.floor(Math.random() * ((leftLen / (5 - i)) - 200)) + 200;
+		leftLen -= len;
+		groundArray.push({
+			strokeStyle: '#2E2532',
+			lineWidth: lWidth * 30,
+			xInit: XCoor,
+			yInit: 385,
+			xEnd: XCoor + len,
+			yEnd: 385
+		});
+		prevXCoor = XCoor + len;
+		if (leftLen < 100) break;
+	}
+	groundArray.sort((a, b) => a.xInit >= b.xInit ? 1 : -1);
+}
+
+const controller = {
+	left: false,
+	right: false,
+	up: false,
+	keyListener: function (event) {
+		var key_state = (event.type == "keydown") ? true : false;
+		switch (event.keyCode) {
+			case 37:// left key
+				controller.left = key_state;
+				break;
+			case 38:// up key
+				controller.up = key_state;
+				break;
+			case 39:// right key
+				controller.right = key_state;
+				break;
+		}
+	}
+};
 
 const ground = function () {
 	this.groundArray.forEach(e => {
@@ -90,6 +151,36 @@ const ground = function () {
 	});
 }
 
+const createCloud = function (x, y, fill) {
+	context.beginPath();
+	context.moveTo(x, y);
+	// context.bezierCurveTo(130, 100, 130, 150, 230, 150);
+	// context.bezierCurveTo(250, 180, 320, 180, 340, 150);
+	// context.bezierCurveTo(420, 150, 420, 120, 390, 100);
+	// context.bezierCurveTo(430, 40, 370, 30, 340, 50);
+	// context.bezierCurveTo(320, 5, 250, 20, 250, 50);
+	// context.bezierCurveTo(200, 5, 150, 20, 170, 80);
+	context.quadraticCurveTo(x, y + 50, x + 50, y + 25);
+	context.quadraticCurveTo(x + 50, y + 50, x + 125, y - 5);
+	context.quadraticCurveTo(x + 75, y - 50, x + 75, y - 25);
+	context.quadraticCurveTo(x, y - 25, x, y + 5);
+	context.closePath();
+	context.lineWidth = 5;
+	context.fillStyle = fill;
+	context.fill();
+}
+
+const cloud = function () {
+	cloudCoors.forEach(e => {
+		e.x += e.speed;
+		if (e.x > context.canvas.width)
+			e.x = 0;
+		/* cloudimg = new Image();
+		cloudimg.src = 'http://silveiraneto.net/wp-content/uploads/2011/06/cloud.png';
+		context.drawImage(cloudimg, e.x, 0); */
+		createCloud(e.x, e.y, e.fill);
+	});
+}
 const reset = function () { }
 
 let hitCount = 0;
@@ -114,7 +205,7 @@ const loop = function () {
 
 	// if square is falling below floor line for each ground segment, write for loop
 	this.groundArray.forEach(e => {
-		if (square.x > (e.xInit - 30) && square.x < (e.xEnd - 30)) {
+		if (square.x > (e.xInit - 30) && square.x < (e.xEnd)) {	//add logic for basic ground
 			if (square.y > (e.yInit - e.lineWidth / 2) - square.height) {
 				square.jumping = false;
 				square.y = (e.yInit - e.lineWidth / 2) - square.height;
@@ -143,11 +234,11 @@ const loop = function () {
 	} else if (square.x > 1220) {// if square goes past right boundary
 		square.x = -20;
 		res.textContent = hitCount;
-		nextFrame();
+		nextLevel();
 	}
 
 	// Creates the backdrop for each frame
-	context.fillStyle = "#201A23";
+	context.fillStyle = "#b4ddf0";
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
 	// Creates and fills the cube for each frame
@@ -155,6 +246,9 @@ const loop = function () {
 	context.beginPath();
 	context.rect(square.x, square.y, square.width, square.height);
 	context.fill();
+
+	// Creates the "cloud" for each frame
+	cloud();
 
 	// Creates the "ground" for each frame
 	ground();
