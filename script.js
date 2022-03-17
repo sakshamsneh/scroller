@@ -260,16 +260,72 @@ const reset = function () { }
 
 let hitCount = 0;
 
+const player = function (dir) {
+	// Creates and fills the cube for each frame
+	if (dir == 1) {
+		context.fillStyle = "#dfb791"; // body
+		context.beginPath();
+		context.rect(square.x, square.y, square.width, square.height);
+		context.fill();
+
+		context.strokeStyle = '#000000';	//hair
+		context.lineWidth = 3;
+		context.strokeRect(square.x, square.y, square.width, 1);
+		context.lineWidth = 8;
+		context.strokeRect(square.x + 2, square.y + 4, 8, 1);
+
+		context.strokeStyle = '#372b89';	//pants
+		context.lineWidth = 12;
+		context.strokeRect(square.x + 6, square.y + square.width - 8, square.width - 12, 1);
+
+		context.strokeStyle = '#000000';	//eyes
+		context.lineWidth = 2;
+		context.strokeRect(square.x + square.width - 5, square.y + 10, 2, 2);
+
+		/* context.strokeStyle = '#ff0000';	//cap
+		context.lineWidth = 4;
+		context.strokeRect(square.x, square.y-2, square.width - 12, 1); */
+	} else {
+		context.fillStyle = "#dfb791"; // body
+		context.beginPath();
+		context.rect(square.x, square.y, square.width, square.height);
+		context.fill();
+
+		context.strokeStyle = '#000000';	//hair
+		context.lineWidth = 3;
+		context.strokeRect(square.x, square.y, square.width, 1);
+		context.lineWidth = 8;
+		context.strokeRect(square.x + square.width - 10, square.y + 4, 8, 1);
+
+		context.strokeStyle = '#372b89';	//pants
+		context.lineWidth = 12;
+		context.strokeRect(square.x + 6, square.y + square.width - 8, square.width - 12, 1);
+
+		context.strokeStyle = '#000000';	//eyes
+		context.lineWidth = 2;
+		context.strokeRect(square.x + 5, square.y + 10, 2, 2);
+
+		/* context.strokeStyle = '#ff0000';	//cap
+		context.lineWidth = 4;
+		context.strokeRect(square.x, square.y-2, square.width - 12, 1); */
+	}
+}
+
+var dir = 1;
+
 const loop = function () {
 	// if square is falling below floor line for each ground segment, write for loop
 	let yVelocity = 0;
+	// var dir = 1;
 	this.groundArray.forEach(e => {
 		if (square.x > (e.xInit - 30) && square.x < (e.xEnd)) {	//add logic for basic ground
 			yVelocity = e.yVelocity;
 			if (controller.left) {
+				dir = 0;
 				square.xVelocity -= e.xVelocity;
 			}
 			if (controller.right) {
+				dir = 1;
 				square.xVelocity += e.xVelocity;
 			}
 			var sqHeight = e.type == 0 ? square.height : e.type == 1 ? square.height / 2 : square.height;
@@ -322,10 +378,10 @@ const loop = function () {
 		square.x = context.canvas.width - 20;
 
 	if (controller.right && square.x > context.canvas.width / 2) {
-		if (nextLevel(1) == 0)
+		if (nextLevel(dir) == 0)
 			square.x -= 18;
 	} else if (controller.left && square.x < context.canvas.width / 2) {
-		if (nextLevel(0) == 0)
+		if (nextLevel(dir) == 0)
 			square.x += 18;
 	}
 
@@ -333,11 +389,8 @@ const loop = function () {
 	context.fillStyle = "#b4ddf0";
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
-	// Creates and fills the cube for each frame
-	context.fillStyle = "#4f5f58"; // hex for cube color
-	context.beginPath();
-	context.rect(square.x, square.y, square.width, square.height);
-	context.fill();
+	// Creates the "player" for each frame
+	player(dir);
 
 	// Creates the "cloud" for each frame
 	cloud();
