@@ -149,6 +149,7 @@ const controller = {
 	up: false,
 	space: false,
 	ctrl: false,
+	v: false,
 	keyListener: function (event) {
 		var key_state = (event.type == "keydown") ? true : false;
 		switch (event.keyCode) {
@@ -166,6 +167,9 @@ const controller = {
 				break;
 			case 17://ctrl key
 				controller.ctrl = key_state;
+				break;
+			case 86://v key
+				controller.v = key_state;
 				break;
 		}
 	}
@@ -222,7 +226,7 @@ const reset = function () { }
 
 let hitCount = 0;
 
-const player = function (dir, sword, shield, shieldTime) {
+const player = function (dir, shield, shieldTime, weapon, weaponReady) {		//weapon: sword/bow/spear
 	context.fillStyle = "#dfb791"; // body
 	context.beginPath();
 	context.rect(square.x, square.y, square.width, square.height);
@@ -252,17 +256,48 @@ const player = function (dir, sword, shield, shieldTime) {
 		context.lineWidth = 4;
 		context.strokeRect(square.x + 10, square.y + square.width - 10, 8, 1);
 
-		if (sword == 0) {	//no space
-			context.strokeStyle = '#939595';	//sword
-			context.lineWidth = 4;
-			context.strokeRect(square.x + 18, square.y + square.width - 10, 16, 1);
-		} else {
-			context.beginPath();
-			context.strokeStyle = '#939595';	//sword
-			context.lineWidth = 4;
-			context.moveTo(square.x + 18, square.y + square.width - 10);
-			context.lineTo(square.x + 18 + 16, square.y + square.width - 20);
-			context.stroke();
+		switch (weapon) {
+			case 'sword':
+				if (weaponReady == 0) {	//no space
+					context.strokeStyle = '#939595';	//sword
+					context.lineWidth = 4;
+					context.strokeRect(square.x + 18, square.y + square.width - 10, 16, 1);
+				} else {
+					context.beginPath();
+					context.strokeStyle = '#939595';	//sword
+					context.lineWidth = 4;
+					context.moveTo(square.x + 18, square.y + square.width - 10);
+					context.lineTo(square.x + 18 + 16, square.y + square.width - 20);
+					context.stroke();
+				}
+				break;
+			case 'bow':
+				if (weaponReady == 0) {								//bow
+					context.strokeStyle = '#939595';
+					context.lineWidth = 4;
+					context.strokeRect(square.x + 18, square.y + square.width - 10, 30, 1);
+					context.beginPath();
+					context.arc(square.x + 4, square.y + 16, 40, 125, Math.PI / 4);
+					context.stroke();
+				} else {									//shooting arrow
+					context.strokeStyle = '#000000';
+					context.lineWidth = 4;
+					context.strokeRect(square.x + 36, square.y + square.width - 10, 30, 1);
+					context.beginPath();
+					context.strokeStyle = '#939595';
+					context.arc(square.x + 4, square.y + 16, 40, 125, Math.PI / 4);
+					context.stroke();
+				}
+				break;
+			case 'hand':
+				if (weaponReady == 1) {
+					context.strokeStyle = '#000000';
+					context.lineWidth = 2;
+					context.strokeRect(square.x + 36, square.y + square.width - 20, 10, 10);
+				}
+				break;
+			default:
+				break;
 		}
 	} else {
 		context.lineWidth = 8;
@@ -284,17 +319,48 @@ const player = function (dir, sword, shield, shieldTime) {
 		context.lineWidth = 4;
 		context.strokeRect(square.x + square.width - 18, square.y + square.width - 10, 8, 1);
 
-		if (sword == 0) {	//no space
-			context.strokeStyle = '#939595';	//sword
-			context.lineWidth = 4;
-			context.strokeRect(square.x - 2, square.y + square.width - 10, 16, 1);
-		} else {
-			context.beginPath();
-			context.strokeStyle = '#939595';	//sword
-			context.lineWidth = 4;
-			context.moveTo(square.x - 2, square.y + square.width - 20);
-			context.lineTo(square.x - 2 + 16, square.y + square.width - 10);
-			context.stroke();
+		switch (weapon) {
+			case 'sword':
+				if (weaponReady == 0) {	//no space
+					context.strokeStyle = '#939595';	//sword
+					context.lineWidth = 4;
+					context.strokeRect(square.x - 2, square.y + square.width - 10, 16, 1);
+				} else {
+					context.beginPath();
+					context.strokeStyle = '#939595';	//sword
+					context.lineWidth = 4;
+					context.moveTo(square.x - 2, square.y + square.width - 20);
+					context.lineTo(square.x - 2 + 16, square.y + square.width - 10);
+					context.stroke();
+				}
+				break;
+			case 'bow':
+				if (weaponReady == 0) {								//bow
+					context.strokeStyle = '#939595';
+					context.lineWidth = 4;
+					context.strokeRect(square.x - 16, square.y + square.width - 10, 30, 1);
+					context.beginPath();
+					context.arc(square.x + 30, square.y + 16, 40, 0.75 * Math.PI, 1.20 * Math.PI);
+					context.stroke();
+				} else {									//shooting arrow
+					context.strokeStyle = '#000000';
+					context.lineWidth = 4;
+					context.strokeRect(square.x - 34, square.y + square.width - 10, 30, 1);
+					context.beginPath();
+					context.strokeStyle = '#939595';
+					context.arc(square.x + 30, square.y + 16, 40, 0.75 * Math.PI, 1.20 * Math.PI);
+					context.stroke();
+				}
+				break;
+			case 'hand':
+				if (weaponReady == 1) {
+					context.strokeStyle = '#000000';
+					context.lineWidth = 2;
+					context.strokeRect(square.x - 14, square.y + square.width - 20, 10, 10);
+				}
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -313,11 +379,19 @@ const player = function (dir, sword, shield, shieldTime) {
 var dir = 1;
 var shieldTime = 100, shieldTimeout = 0, singleShieldout = false;
 var shield = 0;
+var weapons = ['hand', 'sword', 'bow'], weaponIndex = 0, weaponChangeTimeout = 0;
 
 const loop = function () {
 	let yVelocity = 0;
-	let sword = controller.space ? 1 : 0;
-	// res.textContent = shieldTimeout;
+	let weaponReady = controller.space ? 1 : 0;
+	if (controller.v && weaponChangeTimeout == 0) {
+		weaponIndex += 1;
+		if (weaponIndex >= weapons.length)
+			weaponIndex = 0;
+		weaponChangeTimeout = 20;
+	}
+	if (weaponChangeTimeout > 0) weaponChangeTimeout--;
+	// res.textContent = weaponIndex;	//use to monitor variables
 	if (controller.ctrl) {
 		if (shieldTimeout == 0) {
 			if (shieldTime > 0 && shieldTimeout == 0) shield = 1;		//if ctrl pressed, shieldTime>0, then keep shield open
@@ -392,7 +466,8 @@ const loop = function () {
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
 	// Creates the "player" for each frame
-	player(dir, sword, shield, shieldTime);
+	// (dir, shield, shieldTime, weapon, weaponReady)
+	player(dir, shield, shieldTime, weapons[weaponIndex], weaponReady);
 
 	// Creates the "cloud" for each frame
 	cloud();
