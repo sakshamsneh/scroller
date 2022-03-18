@@ -5,3 +5,6 @@ EXTRA CODEs
 		context.lineTo(square.x + 6, square.y);
 		context.lineTo(square.x + 10, square.y - 6);
 		context.stroke();
+
+
+			// context.arc(square.x + 16, square.y + 16, 40, 125, Math.PI / 4);	//4th part of circle

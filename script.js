@@ -131,7 +131,7 @@ var groundArray = [
 
 let overallx = 1220;
 let leftLen = context.canvas.width;
-// Create the obstacles for each frame
+// updateFrame
 const nextLevel = (a) => {
 	let x = a == 0 ? 8 : -8;
 	if ((overallx == 1220 && a == 0) || (overallx == 2420 && a == 1)) return -1;
@@ -222,17 +222,17 @@ const reset = function () { }
 
 let hitCount = 0;
 
-const player = function (dir, sword, shield) {
-	// Creates and fills the cube for each frame
-	if (dir == 1) {
-		context.fillStyle = "#dfb791"; // body
-		context.beginPath();
-		context.rect(square.x, square.y, square.width, square.height);
-		context.fill();
+const player = function (dir, sword, shield, shieldTime) {
+	context.fillStyle = "#dfb791"; // body
+	context.beginPath();
+	context.rect(square.x, square.y, square.width, square.height);
+	context.fill();
 
-		context.strokeStyle = '#000000';	//hair
-		context.lineWidth = 3;
-		context.strokeRect(square.x, square.y, square.width, 1);	//init x, init y, len of line, box width(keep 1)
+	context.strokeStyle = '#000000';	//hair
+	context.lineWidth = 3;
+	context.strokeRect(square.x, square.y, square.width, 1);	//init x, init y, len of line, box width(keep 1)
+
+	if (dir == 1) {
 		context.lineWidth = 8;
 		context.strokeRect(square.x + 2, square.y + 4, 8, 1);
 
@@ -264,24 +264,7 @@ const player = function (dir, sword, shield) {
 			context.lineTo(square.x + 18 + 16, square.y + square.width - 20);
 			context.stroke();
 		}
-
-		if (shield) {
-			context.beginPath();
-			context.strokeStyle = '#2d5555';	//sword
-			context.lineWidth = 4;
-			// context.arc(square.x + 16, square.y + 16, 40, 125, Math.PI / 4);	//4th part of circle
-			context.arc(square.x + 16, square.y + 16, 40, 0, 2 * Math.PI);
-			context.stroke();
-		}
 	} else {
-		context.fillStyle = "#dfb791"; // body
-		context.beginPath();
-		context.rect(square.x, square.y, square.width, square.height);
-		context.fill();
-
-		context.strokeStyle = '#000000';	//hair
-		context.lineWidth = 3;
-		context.strokeRect(square.x, square.y, square.width, 1);
 		context.lineWidth = 8;
 		context.strokeRect(square.x + square.width - 10, square.y + 4, 8, 1);
 
@@ -313,35 +296,50 @@ const player = function (dir, sword, shield) {
 			context.lineTo(square.x - 2 + 16, square.y + square.width - 10);
 			context.stroke();
 		}
+	}
 
-		if (shield) {
-			context.beginPath();
-			context.strokeStyle = '#2d5555';	//sword
-			context.lineWidth = 4;
-			context.arc(square.x + 16, square.y + 16, 40, 0, 2 * Math.PI);
-			context.stroke();
-		}
+	if (shield) {
+		context.beginPath();
+		context.shadowBlur = 5;
+		context.shadowColor = '#2d5555';
+		context.strokeStyle = '#2d5555';	//shield
+		context.lineWidth = shieldTime % 20 == 0 ? 10 : 4;
+		context.arc(square.x + 16, square.y + 16, 40, 0, 2 * Math.PI);
+		context.stroke();
+		context.shadowBlur = 0;
 	}
 }
 
 var dir = 1;
-var shieldTime = 100, shieldTimeout = 100;
+var shieldTime = 100, shieldTimeout = 0, singleShieldout = false;
 var shield = 0;
 
 const loop = function () {
 	let yVelocity = 0;
 	let sword = controller.space ? 1 : 0;
+	// res.textContent = shieldTimeout;
 	if (controller.ctrl) {
-		if (shieldTime > 0) shield = 1;		//if ctrl pressed, shieldTime>0, then keep shield open
-		else {
-			shieldTime = 100;				//if shieldTime==0, ctrl pressed, then open shield, restart shieldTime=100
-			shield = 1;
+		if (shieldTimeout == 0) {
+			if (shieldTime > 0 && shieldTimeout == 0) shield = 1;		//if ctrl pressed, shieldTime>0, then keep shield open
+			else {
+				shieldTime = 100;				//if shieldTime==0, ctrl pressed, then open shield, restart shieldTime=100
+				shield = 1;
+			}
 		}
 	}
 	if (shieldTime > 0 && shield == 1) {	//if shieldTime>0 and shield is open, reduce shieldTime
 		shieldTime--;
+		singleShieldout = false;
 	}
-	if (shieldTime == 0) shield = 0;		//if shieldTime==0, close shield
+	if (shieldTimeout > 0)		//write logic for shield timeout
+		shieldTimeout--;
+	if (shieldTime == 0) {		//if shieldTime==0, close shield
+		if (shieldTimeout <= 0 && !singleShieldout) {
+			shieldTimeout = 150;
+			singleShieldout = true;
+		}
+		shield = 0;
+	}
 
 	// if square is falling below floor line for each ground segment, write for loop
 	this.groundArray.forEach(e => {
@@ -394,7 +392,7 @@ const loop = function () {
 	context.fillRect(0, 0, 1220, 400); // x, y, width, height
 
 	// Creates the "player" for each frame
-	player(dir, sword, shield);
+	player(dir, sword, shield, shieldTime);
 
 	// Creates the "cloud" for each frame
 	cloud();
