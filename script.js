@@ -64,7 +64,7 @@ var groundArray = [
 	},
 	{
 		strokeStyle: '#594243',
-		lineWidth: 90,
+		lineWidth: 120,
 		xInit: 700,
 		yInit: 385,
 		xEnd: 780,
@@ -150,6 +150,7 @@ const controller = {
 	space: false,
 	ctrl: false,
 	v: false,
+	enter: false,
 	keyListener: function (event) {
 		var key_state = (event.type == "keydown") ? true : false;
 		switch (event.keyCode) {
@@ -170,6 +171,9 @@ const controller = {
 				break;
 			case 86://v key
 				controller.v = key_state;
+				break;
+			case 13://enter key
+				controller.enter = key_state;
 				break;
 		}
 	}
@@ -416,16 +420,40 @@ const loop = function () {
 	}
 
 	// if square is falling below floor line for each ground segment, write for loop
-	this.groundArray.forEach(e => {
+	groundArray.forEach((e, i) => {	// add logic: if next height is greater than square.height/2, then don't proceed, only jump proceed
+		// var i = 0;
+		// for (; i < groundArray.length; i++) {
+		// var e = groundArray[i];
+		var e2 = {};
 		if (square.x > (e.xInit - 30) && square.x < (e.xEnd)) {	//add logic for basic ground
 			yVelocity = e.yVelocity;
 			if (controller.left) {
 				dir = 0;
-				square.xVelocity -= e.xVelocity;
+				if (i != 0)
+					e2 = groundArray[i - 1];
+				// res.textContent = (e2.yInit - (e2.lineWidth * 0.5)) + ':' + (e.yInit - (e.lineWidth * 0.5));
+				res.textContent = (e2.yInit) + ':' + (e2.lineWidth * 0.5) + ',' + (e.yInit) + ':' + ((e.lineWidth * 0.5));
+				// need to correct below logic
+				if (
+					(square.x < e.xInit)
+					&&
+					((e.yInit - (e.lineWidth * 0.5)) - (e2.yInit - (e2.lineWidth * 0.5)) > 24)
+					&& (square.jumping == false)
+				)
+					square.x = e.xInit;
+				else
+					square.xVelocity -= e.xVelocity;
 			}
 			if (controller.right) {
 				dir = 1;
-				square.xVelocity += e.xVelocity;
+				if (i != groundArray.length - 1)
+					e2 = groundArray[i + 1];
+				if ((square.x + square.width > e.xEnd)
+					&& ((e.yInit - (e.lineWidth * 0.5)) - (e2.yInit - (e2.lineWidth * 0.5)) > 24)
+					&& (square.jumping == false))
+					square.x = e.xEnd - square.width;
+				else
+					square.xVelocity += e.xVelocity;
 			}
 			var sqHeight = e.type == 0 ? square.height : e.type == 1 ? square.height / 2 : square.height;
 			if (square.y > (e.yInit - e.lineWidth / 2) - sqHeight) {
@@ -435,6 +463,7 @@ const loop = function () {
 			}
 		}
 	});
+	// }
 
 	if (controller.up && square.jumping == false) {
 		square.yVelocity -= yVelocity;
@@ -450,7 +479,7 @@ const loop = function () {
 
 	if (square.x < -20)
 		square.x = -20;
-	else if (square.x > context.canvas.width)
+	else if (square.x > context.canvas.width - 20)
 		square.x = context.canvas.width - 20;
 
 	if (controller.right && square.x > context.canvas.width / 2) {
